@@ -26,26 +26,25 @@ Implementação Projeto AWS-API-HADOOP
 - Criar a lambda
 - Aba código > Editar configurações de tempo de execução > manipulador:api-extract.lambda_handler
  - O manipulador deve ser o "nome_do_script"."nome_da_funcao_no_script". por padrão é lambda_function.lambda_handler
-- Aba configurações > configuração geral > editar > Tempo limite: 15min 0seg
- - O código da lambda rodará por 10min, conforme a lógica criada.
+- Aba configurações > configuração geral > editar > Tempo limite: 1min 0seg
 
 3.1 Adicionar o gatilho da Lambda
-- Configuração do gatilho (será agendada pelo EventBridge para disparar as 6am horário de Brasília(9am UTC) de segunda à sexta no mês de janeiro)
+- Configuração do gatilho (será agendada pelo EventBridge para disparar as 6am horário de Brasília(9am UTC) na segunda no mês de janeiro)
 - No painel de design da sua função Lambda, clique em "Add trigger" (Adicionar gatilho).
 - Escolha "EventBridge (CloudWatch Events)" na lista de serviços de gatilho.
 - Escolha "Create a new rule" (Criar uma nova regra).
 - Dê um nome e, opcionalmente, uma descrição para sua regra. (api-extract-6am-brasil)
 - Na seção "Rule type" (Tipo de regra), selecione "Schedule expression" (Expressão de agendamento).
-- Na caixa de expressão, insira a expressão 'cron(0 9 ? 1 MON-FRI *)'
+- Na caixa de expressão, insira a expressão 'cron(0 9 ? 1 MON *)'
 - Certifique-se de que a regra está ativada.
 - Clique em "Add" (Adicionar) para salvar o gatilho.
 
 3.2 Configurar as variáveis de ambiente da lambda (aba configurações)
  . API_KEY : coloque a chave da API gerada do site.
- . FUNCTION : TIME_SERIES_INTRADAY
+ . FUNCTION : TIME_SERIES_DAILY
  . SYMBOL : AMZN
- . INTERVAL : 1min
  . BUCKET_NAME : datalake-hadoop-aws
+ . BUCKET_LAYER : raw
  
 3.3 Carregar o arquivo zip com código + dependências (aba Código)
  - Fazer o upload do arquivo api-extract.zip criado para o bucket 'dependencias-scripts/lambda/'
