@@ -42,7 +42,7 @@ def lambda_handler(_event, _context):
         data_api[date_for_request] = data
 
     # Define a data atual no formato ano-mes-dia
-    current_date = datetime.datetime.now().strftime("%Y%m%d")
+    current_date = datetime.now().strftime("%Y%m%d")
 
     # Define o nome do arquivo que será salvo no S3, incluindo a timestamp
     file_name = f"{BUCKET_LAYER}/{current_date}_raw-data-api-response.json"
