@@ -10,7 +10,7 @@ def lambda_handler(_event, _context):
     A função é acionada segunda-feira às 9 AM UTC e realiza uma única requisição, compilando dados para 
     cada dia útil de semanas anteriores em um arquivo JSON.
 
-    O script coleta dados dos últimos 5 dias úteis da semana anterior (de segunda a sexta-feira da semana anterior).
+    O script coleta dados dos últimos 5 dias úteis da semana anterior (de segunda a sexta-feira das semanas anteriores).
     Os dados são salvos em um folder 'raw' no S3, especificado pela variável de ambiente BUCKET_LAYER.
     """
 
@@ -23,10 +23,11 @@ def lambda_handler(_event, _context):
     s3_client = boto3.client('s3')
 
     # Dicionário para armazenar os dados dos dias úteis
-    weekly_data = {}
+    data_api = {}
 
     # Itera sobre os últimos 5 dias úteis (evitando fim de semana)
-    for i in range(3, 8):  # 3 a 7 incluído
+    for i in range(3, 8):  # 3 a 7 incluído, 8 não entra.
+        
         # Calcula a data para a requisição (dia útil da semana anterior)
         date_for_request = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
 
@@ -37,14 +38,18 @@ def lambda_handler(_event, _context):
         response = requests.get(url)
         data = response.json()
 
-        # Armazena os dados coletados no dicionário, com a chave sendo a data
-        weekly_data[date_for_request] = data
+        # Armazena os dados coletados no dicionário, com a chave sendo a data de requisição
+        data_api[date_for_request] = data
 
-    # Define o nome do arquivo que será salvo no S3
-    file_name = f"{BUCKET_LAYER}/weekly-data-api-response.json"
+    # Define a data atual no formato ano-mes-dia
+    current_date = datetime.datetime.now().strftime("%Y%m%d")
+
+    # Define o nome do arquivo que será salvo no S3, incluindo a timestamp
+    file_name = f"{BUCKET_LAYER}/{current_date}_raw-data-api-response.json"
+
 
     # Salva todos os dados coletados no arquivo JSON no S3
-    s3_client.put_object(Body=json.dumps(weekly_data), Bucket=BUCKET_NAME, Key=file_name)
+    s3_client.put_object(Body=json.dumps(data_api), Bucket=BUCKET_NAME, Key=file_name)
 
     # Registra no log o arquivo salvo
     print(f"Resposta salva no S3: {file_name}")
