@@ -8,7 +8,7 @@ Primeiro, é uma boa prática criar um ambiente virtual para garantir que as dep
 
 sudo apt-get update
 sudo apt-get install python3-venv  # Se ainda não tiver o venv instalado
-python3.10 -m venv apilambda # criando o venv chamado apilambda
+python3.11 -m venv apilambda # criando o venv chamado apilambda
 source apilambda/bin/activate # ativa o venv criado
 
 
@@ -22,7 +22,7 @@ pip install requests
 Criar um diretório para o seu pacote de deployment e copie para lá os pacotes do ambiente virtual.
 
 mkdir lambda_package # criando diretorio lambda_package
-cp -r apilambda/lib/python3.10/site-packages/* lambda_package/  # Substitua o 3.10 pela sua versão do Python no projeto
+cp -r apilambda/lib/python3.11/site-packages/* lambda_package/  # Substitua o 3.11 pela sua versão do Python no projeto
 
 
 4. Adicionar o Código da Função Lambda

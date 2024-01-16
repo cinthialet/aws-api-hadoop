@@ -1,45 +1,44 @@
 import json
 import boto3
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 
 def lambda_handler(_event, _context):
     """
-    Coleta dados da ação especificada da API Alpha Vantage para cada dia útil da semana anterior. 
-    A função é acionada segunda-feira às 9 AM UTC e realiza uma única requisição, compilando dados para 
-    cada dia útil de semanas anteriores em um arquivo JSON.
+    Executa uma função AWS Lambda para coletar dados financeiros usando a API Alpha Vantage e armazenar o resultado no Amazon S3.
 
-    O script coleta dados dos últimos 5 dias úteis da semana anterior (de segunda a sexta-feira das semanas anteriores).
-    Os dados são salvos em um folder 'raw' no S3, especificado pela variável de ambiente BUCKET_LAYER.
+    Esta função é projetada para ser acionada manualmente ou por um evento programado. Ela consulta a API Alpha Vantage para 
+    obter dados financeiros do ativo especificado e armazena o resultado em um arquivo JSON no S3.
+
+    Variáveis de ambiente:
+    - API_KEY: Chave da API para acessar a API Alpha Vantage.
+    - SYMBOL: Símbolo do ativo financeiro.
+    - FUNCTION: Tipo de função da API Alpha Vantage a ser utilizada (por exemplo, 'TIME_SERIES_DAILY').
+    - BUCKET_NAME: Nome do bucket do S3 onde os dados serão armazenados.
+    - BUCKET_LAYER: Camada ou diretório dentro do bucket do S3 para armazenamento dos dados.
+
+    A função cria um cliente S3, constrói a URL de requisição para a API Alpha Vantage com os parâmetros especificados, 
+    realiza a requisição e armazena a resposta em um arquivo JSON no S3. O nome do arquivo inclui a data atual para 
+    facilitar o rastreamento e a organização.
     """
-
+    
+    # carregar variáveis de ambiente
     API_KEY = os.getenv('API_KEY')
     SYMBOL = os.getenv('SYMBOL') 
     FUNCTION = os.getenv('FUNCTION') 
     BUCKET_NAME = os.getenv('BUCKET_NAME')
     BUCKET_LAYER = os.getenv('BUCKET_LAYER')  # Nome do folder para salvar os dados, raw
 
+    # cliente para interagir com o s3
     s3_client = boto3.client('s3')
 
-    # Dicionário para armazenar os dados dos dias úteis
-    data_api = {}
+    # Monta a URL da requisição para a API Alpha Vantage
+    url = f'https://www.alphavantage.co/query?function={FUNCTION}&symbol={SYMBOL}&apikey={API_KEY}&datatype=json'
 
-    # Itera sobre os últimos 5 dias úteis (evitando fim de semana)
-    for i in range(3, 8):  # 3 a 7 incluído, 8 não entra.
-        
-        # Calcula a data para a requisição (dia útil da semana anterior)
-        date_for_request = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
-
-        # Monta a URL da requisição para a API Alpha Vantage
-        url = f'https://www.alphavantage.co/query?function={FUNCTION}&symbol={SYMBOL}&apikey={API_KEY}&datatype=json'
-
-        # Faz a requisição para a API Alpha Vantage
-        response = requests.get(url)
-        data = response.json()
-
-        # Armazena os dados coletados no dicionário, com a chave sendo a data de requisição
-        data_api[date_for_request] = data
+    # Faz a requisição para a API Alpha Vantage e armazena a resposta
+    response = requests.get(url)
+    data_api = response.json()
 
     # Define a data atual no formato ano-mes-dia
     current_date = datetime.now().strftime("%Y%m%d")
@@ -47,11 +46,11 @@ def lambda_handler(_event, _context):
     # Define o nome do arquivo que será salvo no S3, incluindo a timestamp
     file_name = f"{BUCKET_LAYER}/{current_date}_raw-data-api-response.json"
 
-
-    # Salva todos os dados coletados no arquivo JSON no S3
+    # Salva os dados coletados no arquivo JSON no S3
     s3_client.put_object(Body=json.dumps(data_api), Bucket=BUCKET_NAME, Key=file_name)
 
     # Registra no log o arquivo salvo
     print(f"Resposta salva no S3: {file_name}")
 
-    print(f"Coleta e armazenamento de dados finalizados com sucesso. Os dados da semana foram salvos em {BUCKET_NAME}/{BUCKET_LAYER}")
+    print(f"Coleta e armazenamento de dados finalizados com sucesso. Os dados foram salvos em {BUCKET_NAME}/{BUCKET_LAYER}")
+
