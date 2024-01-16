@@ -1,5 +1,4 @@
 .env
-api-extract.zip
 lambda_package/
 apilambda/
 api-extract-20240114-123614/
